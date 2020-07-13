@@ -1,0 +1,843 @@
+---
+title: "TotTag Methods Analyses"
+output: html_notebook
+---
+
+# SET UP ENVIRONMENT
+```{r}
+
+library(readr)
+library(tidyverse)
+library(anytime)
+library(lubridate)
+library(patchwork)
+
+# Functions
+source("~/Dropbox/Research/Vanderbilt/LENA data/Remove Naps/identify_outliers_histogram.R")
+source("~/Dropbox/Research/Vanderbilt/LENA data/Remove Naps/winsorize.R")
+
+# Display options
+options(scipen = 999)
+
+```
+
+# READ IN AND REFORMAT THE TOTTAG DATA
+```{r}
+
+setwd("~/Dropbox/Research/Vanderbilt/Ecology of Early Life/Methods Manuscript/Data")
+
+Day12C <- read.table("prox/20200606/smoothedav2C.log") %>%
+  mutate(V1 = (anytime(V1))+18000,
+         V2 = str_remove(V2,"c0:98:00:00:e5:42:00:"),
+         V2 = paste("2c_",V2)) %>%
+  rename(Time = V1,
+         Dyad = V2,
+         Prox = V3) %>%
+  mutate(Time = format(as.POSIXct(strptime(Time,"%Y-%m-%d %H:%M:%S",tz="")) ,format = "%H:%M:%S"),
+         Day = "1")
+
+Day12D <- read.table("prox/20200606/smoothedav2D.log") %>%
+  mutate(V1 = (anytime(V1))+18000,
+         V2 = str_remove(V2,"c0:98:00:00:e5:42:00:"),
+         V2 = paste("2d_",V2)) %>%
+  rename(Time = V1,
+         Dyad = V2,
+         Prox = V3) %>%
+  mutate(Time = format(as.POSIXct(strptime(Time,"%Y-%m-%d %H:%M:%S",tz="")) ,format = "%H:%M:%S"),
+         Day = "1")
+
+Day127 <- read.table("prox/20200606/smoothedav27.log") %>%
+  mutate(V1 = (anytime(V1))+18000,
+         V2 = str_remove(V2,"c0:98:00:00:e5:42:00:"),
+         V2 = paste("27_",V2)) %>%
+  rename(Time = V1,
+         Dyad = V2,
+         Prox = V3) %>%
+  mutate(Time = format(as.POSIXct(strptime(Time,"%Y-%m-%d %H:%M:%S",tz="")) ,format = "%H:%M:%S"),
+         Day = "1")
+
+Day107 <- read.table("prox/20200606/smoothedav07.log") %>%
+  mutate(V1 = (anytime(V1))+18000,
+         V2 = str_remove(V2,"c0:98:00:00:e5:42:00:"),
+         V2 = paste("7_",V2)) %>%
+  rename(Time = V1,
+         Dyad = V2,
+         Prox = V3) %>%
+  mutate(Time = format(as.POSIXct(strptime(Time,"%Y-%m-%d %H:%M:%S",tz="")) ,format = "%H:%M:%S"),
+         Day = "1")
+
+Day22C <- read.table("prox/20200607/smoothedav2C.log") %>%
+  mutate(V1 = (anytime(V1))+18000,
+         V2 = str_remove(V2,"c0:98:00:00:e5:42:00:"),
+         V2 = paste("2c_",V2)) %>%
+  rename(Time = V1,
+         Dyad = V2,
+         Prox = V3) %>%
+  mutate(Time = format(as.POSIXct(strptime(Time,"%Y-%m-%d %H:%M:%S",tz="")) ,format = "%H:%M:%S"),
+         Day = "1")
+
+Day22D <- read.table("prox/20200607/smoothedav2D.log") %>%
+  mutate(V1 = (anytime(V1))+18000,
+         V2 = str_remove(V2,"c0:98:00:00:e5:42:00:"),
+         V2 = paste("2d_",V2)) %>%
+  rename(Time = V1,
+         Dyad = V2,
+         Prox = V3) %>%
+  mutate(Time = format(as.POSIXct(strptime(Time,"%Y-%m-%d %H:%M:%S",tz="")) ,format = "%H:%M:%S"),
+         Day = "1")
+
+Day227 <- read.table("prox/20200607/smoothedav27.log") %>%
+  mutate(V1 = (anytime(V1))+18000,
+         V2 = str_remove(V2,"c0:98:00:00:e5:42:00:"),
+         V2 = paste("27_",V2)) %>%
+  rename(Time = V1,
+         Dyad = V2,
+         Prox = V3) %>%
+  mutate(Time = format(as.POSIXct(strptime(Time,"%Y-%m-%d %H:%M:%S",tz="")) ,format = "%H:%M:%S"),
+         Day = "1")
+
+Day207 <- read.table("prox/20200607/smoothedav07.log") %>%
+  mutate(V1 = (anytime(V1))+18000,
+         V2 = str_remove(V2,"c0:98:00:00:e5:42:00:"),
+         V2 = paste("7_",V2)) %>%
+  rename(Time = V1,
+         Dyad = V2,
+         Prox = V3) %>%
+  mutate(Time = format(as.POSIXct(strptime(Time,"%Y-%m-%d %H:%M:%S",tz="")) ,format = "%H:%M:%S"),
+         Day = "1")
+
+
+#BIND DATASETS ACCORDING TO DAY 
+
+Day1 <-
+  Day12C %>% 
+  bind_rows(Day12D, Day127, Day107) %>% 
+  mutate(DyadF = as.factor(Dyad)) %>%
+  mutate(DyadF = fct_recode(DyadF, "momson"= "2c_ 2d", "momdaughter" = "2c_ 27",
+         "momdad" = "2c_ 07", "dadson"= "7_ 2d", "daddaughter" = "7_ 27", "sondaughter" = "2d_ 27"),
+         Time2 = as.POSIXct(Time,format = "%H:%M:%S")) %>%
+  filter(DyadF == "momson" | DyadF == "momdaughter" | DyadF == "momdad" | 
+           DyadF == "dadson" | DyadF == "daddaughter" | DyadF == "sondaughter")
+
+Day2 <-
+  Day22C %>% 
+  bind_rows(Day22D, Day227, Day207) %>% 
+  mutate(DyadF = as.factor(Dyad)) %>%
+  mutate(DyadF = fct_recode(DyadF, "momson"= "2c_ 2d", "momdaughter" = "2c_ 27",
+         "momdad" = "2c_ 07", "dadson"= "7_ 2d", "daddaughter" = "7_ 27", "sondaughter" = "2d_ 27"),
+         Time2 = as.POSIXct(Time,format = "%H:%M:%S")) %>%
+  filter(DyadF == "momson" | DyadF == "momdaughter" | DyadF == "momdad" | 
+           DyadF == "dadson" | DyadF == "daddaughter" | DyadF == "sondaughter")
+
+BothDays <-
+  Day1 %>% 
+  bind_rows(Day2)
+
+```
+
+# PLOT CONTINUOUS DATA
+```{r}
+#Day 1
+p1<-Day1 %>%
+  filter(DyadF == "momdaughter") %>%
+  ggplot(aes(x = Time2, y = Prox)) + 
+  geom_bar(stat="identity", color = "orange") + 
+  ylim(0,60) +
+  theme(
+    plot.title = element_text(size = 14, hjust = .5),
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10)) +
+  labs(title = "Proximity between Mother and Daughter on Day 1",
+       x = "Time",
+       y = "Proximity (Ft)")
+
+p2<-Day1 %>%
+  filter(DyadF == "momson") %>%
+  ggplot(aes(x = Time2, y = Prox)) + 
+  geom_bar(stat="identity", color = "darkorange") + 
+  ylim(0,60) +
+  theme(
+    plot.title = element_text(size = 14, hjust = .5),
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10)) +
+  labs(title = "Proximity between Mother and Son on Day 1",
+       x = "Time",
+       y = "Proximity (Ft)")
+
+p3<-Day1 %>%
+  filter(DyadF == "daddaughter") %>%
+  ggplot(aes(x = Time2, y = Prox)) + 
+  geom_bar(stat="identity", color = "mediumseagreen") + 
+  ylim(0,60) + 
+  theme(
+    plot.title = element_text(size = 14, hjust = .5),
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10)) +
+  labs(title = "Proximity between Father and Daughter on Day 1",
+       x = "Time",
+       y = "Proximity (Ft)")
+
+p4<-Day1 %>%
+  filter(DyadF == "dadson") %>%
+  ggplot(aes(x = Time2, y = Prox)) + 
+  geom_bar(stat="identity", color = "seagreen") + 
+  ylim(0,60) + 
+  theme(
+    plot.title = element_text(size = 14, hjust = .5),
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10)) +
+  labs(title = "Proximity between Father and Son on Day 1",
+       x = "Time",
+       y = "Proximity (Ft)")
+
+#knit plots together
+p1+p2+p3+p4
+
+#Day 2
+p5<-Day2 %>%
+  filter(DyadF == "momdaughter") %>%
+  ggplot(aes(x = Time2, y = Prox)) + 
+  geom_bar(stat="identity", color = "orange") + 
+  ylim(0,60) +
+  theme(
+    plot.title = element_text(size = 14, hjust = .5),
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10)) +
+  labs(title = "Proximity between Mother and Daughter on Day 2",
+       x = "Time",
+       y = "Proximity (Ft)")
+
+p6<-Day2 %>%
+  filter(DyadF == "momson") %>%
+  ggplot(aes(x = Time2, y = Prox)) + 
+  geom_bar(stat="identity", color = "darkorange") + 
+  ylim(0,60) +
+  theme(
+    plot.title = element_text(size = 14, hjust = .5),
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10)) +
+  labs(title = "Proximity between Mother and Son on Day 2",
+       x = "Time",
+       y = "Proximity (Ft)")
+
+p7<-Day2 %>%
+  filter(DyadF == "daddaughter") %>%
+  ggplot(aes(x = Time2, y = Prox)) + 
+  geom_bar(stat="identity", color = "mediumseagreen") + 
+  ylim(0,60) + 
+  theme(
+    plot.title = element_text(size = 14, hjust = .5),
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10)) +
+  labs(title = "Proximity between Father and Daughter on Day 2",
+       x = "Time",
+       y = "Proximity (Ft)")
+
+p8<-Day2 %>%
+  filter(DyadF == "dadson") %>%
+  ggplot(aes(x = Time2, y = Prox)) + 
+  geom_bar(stat="identity", color = "seagreen") + 
+  ylim(0,60) + 
+  theme(
+    plot.title = element_text(size = 14, hjust = .5),
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10)) +
+  labs(title = "Proximity between Father and Son on Day 2",
+       x = "Time",
+       y = "Proximity (Ft)")
+
+#knit plots together
+p5+p6+p7+p8
+
+```
+
+# Filtering for Check with Caregiver Reports
+```{r}
+
+#adjust filter day/times according to each report
+
+EMA <- filter(Day2,
+              (hour(Time2) == 19 & minute(Time2) == 39))
+
+EMA %>%
+  group_by(DyadF) %>%
+  summarise_at(
+    vars(Prox),
+    funs(min, max, mean,sd))
+
+```
+
+# LENA DATA
+
+# Import and reformat LENA data
+
+```{r}
+
+setwd("~/Dropbox/Research/Vanderbilt/Ecology of Early Life/Methods Manuscript/Data")
+
+SonDay1Lena <-
+  read_csv("lena/WC_20200606_ADEX.csv") %>%
+  select(Clock_Time_UTC,
+         AWC,
+         Turn_Count,
+         Child_Voc_Count,
+         FAN_Word_Count,
+         MAN_Word_Count,
+         SIL)
+SonDay1Lena$Clock_Time_UTC<-as.POSIXct(SonDay1Lena$Clock_Time_UTC,format="%m/%d/%Y %H:%M:%S")
+SonDay1Lena$Time<-SonDay1Lena$Clock_Time_UTC-18000 
+SonDay1Lena <-
+  SonDay1Lena %>%
+  filter(Time >= as.POSIXct("2020-06-06 08:00:00"),
+         Time < as.POSIXct("2020-06-06 20:00:00")) %>%
+  mutate(Time = format(as.POSIXct(strptime(Time,"%Y-%m-%d %H:%M:%S",tz="")) ,format = "%H:%M:%S"),
+         AWC_son = AWC,
+         CT_son = Turn_Count,
+         CV_son = Child_Voc_Count,
+         FAWC_son = FAN_Word_Count,
+         MAWC_son = MAN_Word_Count,
+         SIL_son = SIL) %>%
+  select(-AWC,
+         -Turn_Count,
+         -Child_Voc_Count,
+         -FAN_Word_Count,
+         -MAN_Word_Count,
+         -SIL,
+         -Clock_Time_UTC)
+
+DaughterDay1Lena <-
+  read_csv("lena/AC_20200606_ADEX.csv") %>% 
+  select(Clock_Time_UTC,
+         AWC,
+         Turn_Count,
+         Child_Voc_Count,
+         FAN_Word_Count,
+         MAN_Word_Count,
+         SIL)
+DaughterDay1Lena$Clock_Time_UTC<-as.POSIXct(DaughterDay1Lena$Clock_Time_UTC,format="%m/%d/%Y %H:%M:%S")
+DaughterDay1Lena$Time<-DaughterDay1Lena$Clock_Time_UTC-18000 
+DaughterDay1Lena <-
+  DaughterDay1Lena %>%
+  filter(Time >= as.POSIXct("2020-06-06 08:00:00"),
+         Time < as.POSIXct("2020-06-06 20:00:00")) %>%
+  mutate(Time = format(as.POSIXct(strptime(Time,"%Y-%m-%d %H:%M:%S",tz="")) ,format = "%H:%M:%S"),
+         AWC_daughter = AWC,
+         CT_daughter = Turn_Count,
+         CV_daughter = Child_Voc_Count,
+         FAWC_daughter = FAN_Word_Count,
+         MAWC_daughter = MAN_Word_Count,
+         SIL_daughter = SIL) %>%
+  select(-AWC,
+         -Turn_Count,
+         -Child_Voc_Count,
+         -FAN_Word_Count,
+         -MAN_Word_Count,
+         -SIL,
+         -Clock_Time_UTC)
+
+SonDay2Lena <-
+  read_csv("lena/WC_20200607_ADEX.csv") %>%
+  select(Clock_Time_UTC,
+         AWC,
+         Turn_Count,
+         Child_Voc_Count,
+         FAN_Word_Count,
+         MAN_Word_Count,
+         SIL)
+SonDay2Lena$Clock_Time_UTC<-as.POSIXct(SonDay2Lena$Clock_Time_UTC,format="%m/%d/%Y %H:%M:%S")
+SonDay2Lena$Time<-SonDay2Lena$Clock_Time_UTC-18000 
+SonDay2Lena <-
+  SonDay2Lena %>%
+  filter(Time >= as.POSIXct("2020-06-07 08:00:00"),
+         Time < as.POSIXct("2020-06-07 20:00:00")) %>%
+  mutate(Time = format(as.POSIXct(strptime(Time,"%Y-%m-%d %H:%M:%S",tz="")) ,format = "%H:%M:%S"),
+         AWC_son = AWC,
+         CT_son = Turn_Count,
+         CV_son = Child_Voc_Count,
+         FAWC_son = FAN_Word_Count,
+         MAWC_son = MAN_Word_Count,
+         SIL_son = SIL) %>%
+  select(-AWC,
+         -Turn_Count,
+         -Child_Voc_Count,
+         -FAN_Word_Count,
+         -MAN_Word_Count,
+         -SIL,
+         -Clock_Time_UTC)
+
+DaughterDay2Lena <-
+  read_csv("lena/AC_20200607_ADEX.csv") %>% 
+  select(Clock_Time_UTC,
+         AWC,
+         Turn_Count,
+         Child_Voc_Count,
+         FAN_Word_Count,
+         MAN_Word_Count,
+         SIL)
+DaughterDay2Lena$Clock_Time_UTC<-as.POSIXct(DaughterDay2Lena$Clock_Time_UTC,format="%m/%d/%Y %H:%M:%S")
+DaughterDay2Lena$Time<-DaughterDay2Lena$Clock_Time_UTC-18000 
+DaughterDay2Lena <-
+  DaughterDay2Lena %>%
+  filter(Time >= as.POSIXct("2020-06-07 08:00:00"),
+         Time < as.POSIXct("2020-06-07 20:00:00")) %>%
+  mutate(Time = format(as.POSIXct(strptime(Time,"%Y-%m-%d %H:%M:%S",tz="")) ,format = "%H:%M:%S"),
+         AWC_daughter = AWC,
+         CT_daughter = Turn_Count,
+         CV_daughter = Child_Voc_Count,
+         FAWC_daughter = FAN_Word_Count,
+         MAWC_daughter = MAN_Word_Count,
+         SIL_daughter = SIL) %>%
+  select(-AWC,
+         -Turn_Count,
+         -Child_Voc_Count,
+         -FAN_Word_Count,
+         -MAN_Word_Count,
+         -SIL,
+         -Clock_Time_UTC)
+
+```
+
+# Reformat TotTag data and combine with LENA
+```{r}
+
+Day1Wide <- Day1 %>%
+  pivot_wider(id_cols = c(Day,Time),
+              names_from = DyadF,
+              values_from = Prox,
+              values_fill = NA) %>%
+  mutate(Day = as.numeric(Day),
+         Time2 = as.POSIXct(Time,format = "%H:%M:%S"),
+         MomSonTouch = if_else(momson <= 3,1,0),
+         DadSonTouch = if_else(dadson <= 3,1,0),
+         MomDaughterTouch = if_else(momdaughter <= 3,1,0),
+         DadDaughterTouch = if_else(daddaughter <= 3,1,0),
+         SOneTouch = if_else(MomSonTouch == 1 | DadSonTouch == 1,1,0),
+         SBothTouch = if_else(MomSonTouch == 1 & DadSonTouch == 1,1,0),
+         SNoTouch = if_else((MomSonTouch == 0 | is.na(MomSonTouch)) & 
+                              (DadSonTouch == 0 | is.na(DadSonTouch)),1,0),
+         DOneTouch = if_else(MomDaughterTouch == 1 | DadDaughterTouch == 1,1,0),
+         DBothTouch = if_else(MomDaughterTouch == 1 & DadDaughterTouch == 1,1,0),
+         DNoTouch = if_else((MomDaughterTouch == 0 | is.na(MomDaughterTouch)) & 
+                              (DadDaughterTouch == 0 | is.na(DadDaughterTouch)),1,0)) %>%
+  mutate_at(vars(MomSonTouch:DNoTouch), replace_na, 0)
+
+Day2Wide <- Day2 %>%
+  pivot_wider(id_cols = c(Day,Time),
+              names_from = DyadF,
+              values_from = Prox,
+              values_fill = NA) %>%
+  mutate(Day = as.numeric(Day)+1,
+         Time2 = as.POSIXct(Time,format = "%H:%M:%S"),
+         MomSonTouch = if_else(momson <= 3,1,0),
+         DadSonTouch = if_else(dadson <= 3,1,0),
+         MomDaughterTouch = if_else(momdaughter <= 3,1,0),
+         DadDaughterTouch = if_else(daddaughter <= 3,1,0),
+         SOneTouch = if_else(MomSonTouch == 1 | DadSonTouch == 1,1,0),
+         SBothTouch = if_else(MomSonTouch == 1 & DadSonTouch == 1,1,0),
+         SNoTouch = if_else((MomSonTouch == 0 | is.na(MomSonTouch)) & 
+                              (DadSonTouch == 0 | is.na(DadSonTouch)),1,0),
+         DOneTouch = if_else(MomDaughterTouch == 1 | DadDaughterTouch == 1,1,0),
+         DBothTouch = if_else(MomDaughterTouch == 1 & DadDaughterTouch == 1,1,0),
+         DNoTouch = if_else((MomDaughterTouch == 0 | is.na(MomDaughterTouch)) & 
+                              (DadDaughterTouch == 0 | is.na(DadDaughterTouch)),1,0)) %>%
+  mutate_at(vars(MomSonTouch:DNoTouch), replace_na, 0)
+  
+#Aggregrate into 5minute chunks
+#Calculate total time and proportion of time in touching distance
+
+Day1Wagg <- Day1Wide %>%
+  group_by(Day,
+           Time2 = cut(Time2, breaks="5 min")) %>%
+  summarize(momdad = mean(momdad, na.rm=TRUE),
+            momdaughter = mean(momdaughter, na.rm=TRUE),
+            momson = mean(momson, na.rm=TRUE),
+            daddaughter = mean(daddaughter, na.rm=TRUE),
+            dadson = mean(dadson, na.rm=TRUE),
+            sondaughter = mean(sondaughter, na.rm=TRUE),
+            Count = sum(Day),
+            MomSonTouch = sum(MomSonTouch),
+            DadSonTouch = sum(DadSonTouch),
+            MomDaughterTouch = sum(MomDaughterTouch),
+            DadDaughterTouch = sum(DadDaughterTouch),
+            SOneTouch = sum(SOneTouch),
+            SBothTouch = sum(SBothTouch),
+            SNoTouch = sum(SNoTouch),
+            DOneTouch = sum(DOneTouch),
+            DBothTouch = sum(DBothTouch),
+            DNoTouch = sum(DNoTouch)) %>%
+  mutate(MomSonTouchP = MomSonTouch/300,
+         DadSonTouchP = DadSonTouch/300,
+         MomDaughterTouchP = MomDaughterTouch/300,
+         DadDaughterTouchP = DadDaughterTouch/300,
+         SOneTouchP = SOneTouch/300,
+         SBothTouchP = SBothTouch/300,
+         SNoTouchP = SNoTouch/300,
+         DOneTouchP = DOneTouch/300,
+         DBothTouchP = DBothTouch/300,
+         DNoTouchP = DNoTouch/300,
+         MomSonTouchPC = MomSonTouch/Count,
+         DadSonTouchPC = DadSonTouch/Count,
+         MomDaughterTouchPC = MomDaughterTouch/Count,
+         DadDaughterTouchPC = DadDaughterTouch/Count,
+         SOneTouchPC = SOneTouch/Count,
+         SBothTouchPC = SBothTouch/Count,
+         SNoTouchPC = SNoTouch/Count,
+         DOneTouchPC = DOneTouch/Count,
+         DBothTouchPC = DBothTouch/Count,
+         DNoTouchPC = DNoTouch/Count,
+         Time = format(as.POSIXct(strptime(Time2,"%Y-%m-%d %H:%M:%S",tz="")) ,format = "%H:%M:%S"))
+
+Day2Wagg <- Day2Wide %>%
+  group_by(Day,
+           Time2 = cut(Time2, breaks="5 min")) %>%
+  summarize(momdad = mean(momdad, na.rm=TRUE),
+            momdaughter = mean(momdaughter, na.rm=TRUE),
+            momson = mean(momson, na.rm=TRUE),
+            daddaughter = mean(daddaughter, na.rm=TRUE),
+            dadson = mean(dadson, na.rm=TRUE),
+            sondaughter = mean(sondaughter, na.rm=TRUE),
+            Count = sum(Day),
+            MomSonTouch = sum(MomSonTouch),
+            DadSonTouch = sum(DadSonTouch),
+            MomDaughterTouch = sum(MomDaughterTouch),
+            DadDaughterTouch = sum(DadDaughterTouch),
+            SOneTouch = sum(SOneTouch),
+            SBothTouch = sum(SBothTouch),
+            SNoTouch = sum(SNoTouch),
+            DOneTouch = sum(DOneTouch),
+            DBothTouch = sum(DBothTouch),
+            DNoTouch = sum(DNoTouch)) %>%
+  mutate(MomSonTouchP = MomSonTouch/300,
+         DadSonTouchP = DadSonTouch/300,
+         MomDaughterTouchP = MomDaughterTouch/300,
+         DadDaughterTouchP = DadDaughterTouch/300,
+         SOneTouchP = SOneTouch/300,
+         SBothTouchP = SBothTouch/300,
+         SNoTouchP = SNoTouch/300,
+         DOneTouchP = DOneTouch/300,
+         DBothTouchP = DBothTouch/300,
+         DNoTouchP = DNoTouch/300,
+         MomSonTouchPC = MomSonTouch/Count,
+         DadSonTouchPC = DadSonTouch/Count,
+         MomDaughterTouchPC = MomDaughterTouch/Count,
+         DadDaughterTouchPC = DadDaughterTouch/Count,
+         SOneTouchPC = SOneTouch/Count,
+         SBothTouchPC = SBothTouch/Count,
+         SNoTouchPC = SNoTouch/Count,
+         DOneTouchPC = DOneTouch/Count,
+         DBothTouchPC = DBothTouch/Count,
+         DNoTouchPC = DNoTouch/Count,
+         Time = format(as.POSIXct(strptime(Time2,"%Y-%m-%d %H:%M:%S",tz="")) ,format = "%H:%M:%S"))
+
+Day1Lena <- full_join(Day1Wagg,SonDay1Lena,by="Time")
+Day1Lena <- full_join(Day1Lena,DaughterDay1Lena,by="Time") 
+
+
+Day2Lena <- full_join(Day2Wagg,SonDay2Lena,by="Time")
+Day2Lena <- full_join(Day2Lena,DaughterDay2Lena,by="Time")
+
+BothDaysLena <- Day1Lena %>%
+  bind_rows(Day2Lena) %>%
+  replace_na(list(MomSonTouchP = 0,
+                  DadSonTouchP = 0,
+                  MomDaughterTouchP = 0,
+                  DadDaughterTouchP = 0,
+                  MomSonTouchPC = 0,
+                  DadSonTouchPC = 0,
+                  MomDaughterTouchPC = 0,
+                  DadDaughterTouchPC = 0,
+                  SOneTouchP = 0,
+                  DOneTouchP = 0,
+                  SBothTouchP = 0,
+                  DBothTouchP = 0,
+                  SNoTouchP = 0,
+                  DNoTouchP = 0,
+                  SOneTouchPC = 0,
+                  DOneTouchPC = 0,
+                  SBothTouchPC = 0,
+                  DBothTouchPC = 0,
+                  SNoTouchPC = 0,
+                  DNoTouchPC = 0))
+
+```
+
+# Subset and reformat data for AWC analysis
+``` {r}
+BothDaysLenaLong <- BothDaysLena %>%
+  select(Day, Time2, Time, momson, dadson, momdaughter, daddaughter,
+         MomSonTouchP, DadSonTouchP, MomDaughterTouchP, DadDaughterTouchP,
+         MomSonTouchPC, DadSonTouchPC, MomDaughterTouchPC, DadDaughterTouchPC,
+         FAWC_son, FAWC_daughter, MAWC_son, MAWC_daughter) %>%
+  pivot_longer(cols = c("momson", "dadson", "momdaughter", "daddaughter"),
+               names_to = c("Dyad"),
+               names_ptypes = list(Dyad = factor()),
+               values_to = c("Prox"),
+               values_ptypes = list(Prox = numeric())) %>%
+  mutate(FAWC = case_when(Dyad == "momson" ~ FAWC_son,
+                          Dyad == "momdaughter" ~ FAWC_daughter),
+         MAWC = case_when(Dyad == "dadson" ~ MAWC_son,
+                          Dyad == "daddaughter" ~ MAWC_daughter),
+         ParentTouchP = case_when(Dyad == "momson" ~ MomSonTouchP,
+                                  Dyad == "momdaughter" ~ MomDaughterTouchP,
+                                  Dyad == "dadson" ~ DadSonTouchP,
+                                  Dyad == "daddaughter" ~ DadDaughterTouchP),
+         ParentTouchPC = case_when(Dyad == "momson" ~ MomSonTouchPC,
+                                   Dyad == "momdaughter" ~ MomDaughterTouchPC,
+                                   Dyad == "dadson" ~ DadSonTouchPC,
+                                   Dyad == "daddaughter" ~ DadDaughterTouchPC)) %>%
+  select(Day, Time, Time2, Dyad, Prox, FAWC, MAWC, ParentTouchP, ParentTouchPC)
+
+momlena <- BothDaysLenaLong %>%
+  filter(Dyad == "momson" | Dyad == "momdaughter")
+
+dadlena <- BothDaysLenaLong %>%
+  filter(Dyad == "dadson" | Dyad == "daddaughter")
+
+```
+
+# Subset and reformat data for CT analysis
+```{r}
+
+Son <- BothDaysLena %>%
+  mutate(OneTouchP = SOneTouchP, 
+         OneTouchPC = SOneTouchPC, 
+         BothTouchP = SBothTouchP, 
+         BothTouchPC = SBothTouchPC, 
+         NoTouchP = SNoTouchP, 
+         NoTouchPC = SNoTouchPC, 
+         AWC = AWC_son, 
+         CT = CT_son, 
+         CV = CV_son, 
+         SIL = SIL_son) %>%
+  select(Day, Time2, Time, OneTouchP, OneTouchPC, BothTouchP, BothTouchPC, 
+         NoTouchP, NoTouchPC, AWC, CT, CV, SIL) 
+  
+Daughter <- BothDaysLena %>%
+  mutate(OneTouchP = DOneTouchP, 
+         OneTouchPC = DOneTouchPC, 
+         BothTouchP = DBothTouchP, 
+         BothTouchPC = DBothTouchPC, 
+         NoTouchP = DNoTouchP, 
+         NoTouchPC = DNoTouchPC, 
+         AWC = AWC_daughter, 
+         CT = CT_daughter, 
+         CV = CV_daughter, 
+         SIL = SIL_daughter) %>%
+  select(Day, Time2, Time, OneTouchP, OneTouchPC, BothTouchP, BothTouchPC, 
+       NoTouchP, NoTouchPC, AWC, CT, CV, SIL) 
+
+SonDaughter <- Son %>%
+  bind_rows(Daughter)
+
+```
+
+# Examine distributions
+``` {r}
+
+identify_outliers_hist(momlena, Prox)
+identify_outliers_hist(momlena, ParentTouchP)
+identify_outliers_hist(momlena, FAWC)
+
+identify_outliers_hist(dadlena, Prox)
+identify_outliers_hist(dadlena, ParentTouchP)
+identify_outliers_hist(dadlena, MAWC)
+
+identify_outliers_hist(SonDaughter, OneTouchP)
+identify_outliers_hist(SonDaughter, BothTouchP)
+identify_outliers_hist(SonDaughter, NoTouchP)
+identify_outliers_hist(SonDaughter, AWC)
+identify_outliers_hist(SonDaughter, CT)
+identify_outliers_hist(SonDaughter, CV)
+identify_outliers_hist(SonDaughter, SIL)
+
+```
+
+# Winsorize outliers and transform skewed distributions
+``` {r}
+
+momlena <- momlena %>%
+  mutate(ProxW = winsorize(Prox, 3),
+       TouchPW = winsorize(ParentTouchP, 3),
+       FAWCW = winsorize(FAWC, 3)) %>%
+  mutate(ProxWT = log(ProxW+1),
+         TouchPWT = asin(sqrt(TouchPW)),
+         FAWCWT = log(FAWCW+1))
+
+dadlena <- dadlena %>%
+  mutate(ProxW = winsorize(Prox, 3),
+         TouchPW = winsorize(ParentTouchP, 3),
+         MAWCW = winsorize(MAWC, 3)) %>%
+  mutate(ProxWT = log(ProxW+1),
+         TouchPWT = asin(sqrt(TouchPW)),
+         MAWCWT = log(MAWCW+1))
+
+SonDaughter <- SonDaughter %>%
+  mutate(OneTouchPW = winsorize(OneTouchP, 3), 
+         BothTouchPW = winsorize(BothTouchP, 3), 
+         NoTouchPW = winsorize(NoTouchP, 3), 
+         AWCW = winsorize(AWC, 3), 
+         CTW = winsorize(CT, 3), 
+         CVW = winsorize(CV, 3), 
+         SILW = winsorize(SIL, 3)) %>%
+  mutate(OneTouchPWT = asin(sqrt(OneTouchPW)),
+         BothTouchPWT = asin(sqrt(BothTouchPW)),
+         NoTouchPWT = asin(sqrt(NoTouchPW)),
+         AWCWT = log(AWCW+1),
+         CTWT = log(CTW+1),
+         CVWT = log(CVW+1),
+         SILWT = log(SILW+1))
+
+```
+
+# Correlations and Scatterplots
+``` {r}
+
+cor.test(momlena$ProxWT,momlena$FAWCWT)
+p9 <- momlena %>%
+  ggplot(aes(x=ProxW, y=FAWCW)) + 
+  geom_point(color="orange", fill="orange", size=2)+
+  geom_smooth(method=lm, color="black") +
+  ylim(-10,400) +
+  labs(x="Proximity to Mother (ft)", y="Female Adult Word Count") +
+  theme(panel.background = element_rect(fill = "white"), 
+        axis.title = element_text(family = "Arial", size=12, color = "black"), 
+        axis.line = element_line(size = .5, colour = "black"), 
+        axis.text = element_text(family = "Arial", size=10, color = "black"),
+        aspect.ratio = 1)
+
+cor.test(momlena$TouchPWT,momlena$FAWCWT)
+p10 <- momlena %>%
+  ggplot(aes(x=TouchPW, y=FAWCW)) + 
+  geom_point(color="orange", fill="orange", size=2)+
+  geom_smooth(method=lm, color="black") +
+  ylim(-10,400) +
+  labs(x="Proportion of 5-min Segment within 
+       Touching Distance of Mother", y="Female Adult Word Count") +
+  theme(panel.background = element_rect(fill = "white"), 
+        axis.title = element_text(family = "Arial", size=12, color = "black"), 
+        axis.line = element_line(size = .5, colour = "black"), 
+        axis.text = element_text(family = "Arial", size=10, color = "black"),
+        aspect.ratio = 1)
+
+p9+p10
+
+cor.test(dadlena$ProxWT,dadlena$MAWCWT)
+p11 <- dadlena %>%
+  ggplot(aes(x=ProxW, y=MAWCW)) + 
+  geom_point(color="mediumseagreen", fill="mediumseagreen", size=2)+
+  geom_smooth(method=lm, color="black") +
+  ylim(-10,400) +
+  labs(x="Proximity to Father (ft)", y="Male Adult Word Count") +
+  theme(panel.background = element_rect(fill = "white"), 
+        axis.title = element_text(family = "Arial", size=12, color = "black"), 
+        axis.line = element_line(size = .5, colour = "black"), 
+        axis.text = element_text(family = "Arial", size=10, color = "black"),
+        aspect.ratio = 1)
+
+cor.test(dadlena$TouchPWT,dadlena$MAWCWT)
+p12 <- dadlena %>%
+  ggplot(aes(x=TouchPW, y=MAWCW)) + 
+  geom_point(color="mediumseagreen", fill="mediumseagreen", size=2)+
+  geom_smooth(method=lm, color="black") +
+  ylim(-10,400) + 
+  labs(x="Proportion of 5-min Segment within
+       Touching Distance of Father", y="Male Adult Word Count") +
+  theme(panel.background = element_rect(fill = "white"), 
+        axis.title = element_text(family = "Arial", size=12, color = "black"), 
+        axis.line = element_line(size = .5, colour = "black"), 
+        axis.text = element_text(family = "Arial", size=10, color = "black"),
+        aspect.ratio = 1)
+
+p11+p12
+
+cor.test(SonDaughter$OneTouchPWT,SonDaughter$CTWT)
+p13 <- SonDaughter %>%
+  ggplot(aes(x=OneTouchPW, y=CTW)) + 
+  geom_point(color="darkorchid4", fill="darkorchid4", size=2)+
+  geom_smooth(method=lm, color="black") +
+  ylim(0,30) + 
+  labs(x="Proportion of 5-min Segment at Least One
+       Caregiver is within Touching Distance", y="Conversational Turn Count") +
+  theme(panel.background = element_rect(fill = "white"), 
+        axis.title = element_text(family = "Arial", size=12, color = "black"), 
+        axis.line = element_line(size = .5, colour = "black"), 
+        axis.text = element_text(family = "Arial", size=10, color = "black"),
+        aspect.ratio = 1)
+p13
+
+```
+
+# SUPPLEMENT
+``` {r}
+
+p1<-Day1 %>%
+  filter(DyadF == "momdaughter") %>%
+  ggplot(aes(x = Time2, y = Prox)) + 
+  geom_bar(stat="identity", color = "orange") + 
+  ylim(0,60) +
+  theme(
+    plot.title = element_text(size = 14, hjust = .5),
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10)) +
+  labs(title = "Proximity between Mother and Daughter on Day 1",
+       x = "Time",
+       y = "Proximity (Ft)")
+
+pS1a<-Day1 %>%
+  filter(DyadF == "momdad") %>%
+  ggplot(aes(x = Time2, y = Prox)) + 
+  geom_bar(stat="identity", color="dodgerblue4") + 
+  ylim(0,60) + 
+  theme(
+    plot.title = element_text(size = 14, hjust = .5),
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10)) +
+  labs(title = "Proximity between Mom and Dad on Day 1",
+       x = "Time",
+       y = "Proximity (Ft)")
+
+pS1b<-Day2 %>%
+  filter(DyadF == "momdad") %>%
+  ggplot(aes(x = Time2, y = Prox)) + 
+  geom_bar(stat="identity", color="steelblue3") + 
+  ylim(0,60) + 
+  theme(
+    plot.title = element_text(size = 14, hjust = .5),
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10)) +
+  labs(title = "Proximity between Mom and Dad on Day 2",
+       x = "Time",
+       y = "Proximity (Ft)")
+
+pS1a+pS1b
+
+pS2a<-Day1 %>%
+  filter(DyadF == "sondaughter") %>%
+  ggplot(aes(x = Time2, y = Prox)) + 
+  geom_bar(stat="identity", color="firebrick") + 
+  ylim(0,60) + 
+  theme(
+    plot.title = element_text(size = 14, hjust = .5),
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10)) +
+  labs(title = "Proximity between Son and Daughter on Day 1",
+       x = "Time",
+       y = "Proximity (Ft)")
+
+pS2b<-Day2 %>%
+  filter(DyadF == "sondaughter") %>%
+  ggplot(aes(x = Time2, y = Prox)) + 
+  geom_bar(stat="identity", color="brown2") + 
+  ylim(0,60) + 
+  theme(
+    plot.title = element_text(size = 14, hjust = .5),
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10)) +
+  labs(title = "Proximity between Son and Daughter on Day 2",
+       x = "Time",
+       y = "Proximity (Ft)")
+
+pS2a+pS2b
+
+```
+
