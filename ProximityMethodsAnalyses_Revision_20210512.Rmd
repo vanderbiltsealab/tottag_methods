@@ -15,11 +15,6 @@ library(patchwork)
 library(pastecs)
 library(DescTools)
 
-# Functions
-source("~/Dropbox/Research/Stats Stuff/R Generic Scripts & Functions/identify_outliers_histogram.R")
-source("~/Dropbox/Research/Stats Stuff/R Generic Scripts & Functions/winsorize.R")
-source("~/Dropbox/Research/Stats Stuff/R Generic Scripts & Functions/remove_outliers.R")
-
 # Display options
 options(scipen = 999)
 
@@ -29,10 +24,10 @@ options(scipen = 999)
 ```{r}
 
 setwd(
-  "~/Dropbox/Research/Vanderbilt/Ecology of Early Life/Methods Manuscript/Data/Family One"
+  "~/tottag_methods"
 )
 
-Day12C <- read.table("prox/20200606/smoothedav2C.log") %>%
+Day12C <- read.table("TotTag Files/Day 1/smoothedav2C.log") %>%
   mutate(
     V1 = (anytime(V1)) + 18000,
     V2 = str_remove(V2, "c0:98:00:00:e5:42:00:"),
@@ -46,7 +41,7 @@ Day12C <- read.table("prox/20200606/smoothedav2C.log") %>%
   ) , format = "%H:%M:%S"),
   Day = "1")
 
-Day12D <- read.table("prox/20200606/smoothedav2D.log") %>%
+Day12D <- read.table("TotTag Files/Day 1/smoothedav2D.log") %>%
   mutate(
     V1 = (anytime(V1)) + 18000,
     V2 = str_remove(V2, "c0:98:00:00:e5:42:00:"),
@@ -60,7 +55,7 @@ Day12D <- read.table("prox/20200606/smoothedav2D.log") %>%
   ) , format = "%H:%M:%S"),
   Day = "1")
 
-Day127 <- read.table("prox/20200606/smoothedav27.log") %>%
+Day127 <- read.table("TotTag Files/Day 1/smoothedav27.log") %>%
   mutate(
     V1 = (anytime(V1)) + 18000,
     V2 = str_remove(V2, "c0:98:00:00:e5:42:00:"),
@@ -74,7 +69,7 @@ Day127 <- read.table("prox/20200606/smoothedav27.log") %>%
   ) , format = "%H:%M:%S"),
   Day = "1")
 
-Day107 <- read.table("prox/20200606/smoothedav07.log") %>%
+Day107 <- read.table("TotTag Files/Day 1/smoothedav07.log") %>%
   mutate(
     V1 = (anytime(V1)) + 18000,
     V2 = str_remove(V2, "c0:98:00:00:e5:42:00:"),
@@ -88,7 +83,7 @@ Day107 <- read.table("prox/20200606/smoothedav07.log") %>%
   ) , format = "%H:%M:%S"),
   Day = "1")
 
-Day22C <- read.table("prox/20200607/smoothedav2C.log") %>%
+Day22C <- read.table("TotTag Files/Day 2/smoothedav2C.log") %>%
   mutate(
     V1 = (anytime(V1)) + 18000,
     V2 = str_remove(V2, "c0:98:00:00:e5:42:00:"),
@@ -102,7 +97,7 @@ Day22C <- read.table("prox/20200607/smoothedav2C.log") %>%
   ) , format = "%H:%M:%S"),
   Day = "2")
 
-Day22D <- read.table("prox/20200607/smoothedav2D.log") %>%
+Day22D <- read.table("TotTag Files/Day 2/smoothedav2D.log") %>%
   mutate(
     V1 = (anytime(V1)) + 18000,
     V2 = str_remove(V2, "c0:98:00:00:e5:42:00:"),
@@ -116,7 +111,7 @@ Day22D <- read.table("prox/20200607/smoothedav2D.log") %>%
   ) , format = "%H:%M:%S"),
   Day = "2")
 
-Day227 <- read.table("prox/20200607/smoothedav27.log") %>%
+Day227 <- read.table("TotTag Files/Day 2/smoothedav27.log") %>%
   mutate(
     V1 = (anytime(V1)) + 18000,
     V2 = str_remove(V2, "c0:98:00:00:e5:42:00:"),
@@ -130,7 +125,7 @@ Day227 <- read.table("prox/20200607/smoothedav27.log") %>%
   ) , format = "%H:%M:%S"),
   Day = "2")
 
-Day207 <- read.table("prox/20200607/smoothedav07.log") %>%
+Day207 <- read.table("TotTag Files/Day 2/smoothedav07.log") %>%
   mutate(
     V1 = (anytime(V1)) + 18000,
     V2 = str_remove(V2, "c0:98:00:00:e5:42:00:"),
@@ -227,11 +222,11 @@ F1BothDays <-
 ```{r}
 
 setwd(
-  "~/Dropbox/Research/Vanderbilt/Ecology of Early Life/Methods Manuscript/Data/Family Two"
+  "~/tottag_methods"
 )
 
-BothDays4F <- read.table("prox/Day 2/smoothedav4F.log") %>%
-  bind_rows(read.table("prox/Day 3/smoothedav4F.log")) %>%
+BothDays4F <- read.table("TotTag Files/Day 1/smoothedav4F.log") %>%
+  bind_rows(read.table("TotTag Files/Day 2/smoothedav4F.log")) %>%
   mutate(
     V2 = str_remove(V2, "c0:98:e5:42:00:"),
     V2 = paste("4F_", V2),
@@ -252,8 +247,8 @@ BothDays4F <- read.table("prox/Day 2/smoothedav4F.log") %>%
   distinct() %>%
   arrange(Day, Time)
 
-BothDays50 <- read.table("prox/Day 2/smoothedav50.log") %>%
-  bind_rows(read.table("prox/Day 3/smoothedav50.log")) %>%
+BothDays50 <- read.table("TotTag Files/Day 1/smoothedav50.log") %>%
+  bind_rows(read.table("TotTag Files/Day 2/smoothedav50.log")) %>%
   mutate(
     V2 = str_remove(V2, "c0:98:e5:42:00:"),
     V2 = paste("50_", V2),
@@ -274,8 +269,8 @@ BothDays50 <- read.table("prox/Day 2/smoothedav50.log") %>%
   distinct() %>%
   arrange(Day, Time)
 
-BothDays51 <- read.table("prox/Day 2/smoothedav51.log") %>%
-  bind_rows(read.table("prox/Day 3/smoothedav51.log")) %>%
+BothDays51 <- read.table("TotTag Files/Day 1/smoothedav51.log") %>%
+  bind_rows(read.table("TotTag Files/Day 2/smoothedav51.log")) %>%
   mutate(
     V2 = str_remove(V2, "c0:98:e5:42:00:"),
     V2 = paste("51_", V2),
@@ -850,7 +845,7 @@ EMA %>%
 setwd("~/Dropbox/Research/Vanderbilt/Ecology of Early Life/Methods Manuscript/Data/Family One")
 
 F1SonDay1Lena <-
-  read_csv("lena/WC_20200606_ADEX.csv") %>%
+  read_csv("lena/F1S_Day 1.csv") %>%
   select(Clock_Time_UTC,
          AWC,
          Turn_Count,
@@ -878,7 +873,7 @@ F1SonDay1Lena <-
          -Clock_Time_UTC)
 
 F1DaughterDay1Lena <-
-  read_csv("lena/AC_20200606_ADEX.csv") %>% 
+  read_csv("lena/F1D_Day 1.csv") %>% 
   select(Clock_Time_UTC,
          AWC,
          Turn_Count,
@@ -906,7 +901,7 @@ F1DaughterDay1Lena <-
          -Clock_Time_UTC)
 
 F1SonDay2Lena <-
-  read_csv("lena/WC_20200607_ADEX.csv") %>%
+  read_csv("lena/F1S_Day 2.csv") %>%
   select(Clock_Time_UTC,
          AWC,
          Turn_Count,
@@ -934,7 +929,7 @@ F1SonDay2Lena <-
          -Clock_Time_UTC)
 
 F1DaughterDay2Lena <-
-  read_csv("lena/AC_20200607_ADEX.csv") %>% 
+  read_csv("lena/F1D_Day 2.csv") %>% 
   select(Clock_Time_UTC,
          AWC,
          Turn_Count,
@@ -970,7 +965,7 @@ F1DaughterDay2Lena <-
 setwd("~/Dropbox/Research/Vanderbilt/Ecology of Early Life/Methods Manuscript/Data/Family Two")
 
 F2DaughterDay1Lena <-
-  read_csv("lena/20210321_192524_029763.csv") %>% 
+  read_csv("lena/F2D_Day 1.csv") %>% 
   select(Clock_Time_TZAdj,
          AWC,
          Turn_Count,
@@ -998,7 +993,7 @@ F2DaughterDay1Lena <-
          -Clock_Time_TZAdj)
 
 F2DaughterDay2Lena <-
-  read_csv("lena/20210321_202437_029783.csv") %>% 
+  read_csv("lena/F2D_Day 2.csv") %>% 
   select(Clock_Time_TZAdj,
          AWC,
          Turn_Count,
